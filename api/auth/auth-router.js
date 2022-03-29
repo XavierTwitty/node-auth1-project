@@ -3,9 +3,9 @@
 const bcrypt = require('bcryptjs');
 const router = require("express").Router()
 
-const { validateUser, validateUserExists, validateUserNotExists } = require('./auth-middleware');
+const { checkUsernameFree, checkUsernameExists, checkPasswordLength } = require('../auth/auth-middleware')
 
-const Users = require('../users/users-model');
+const User = require('../users/users-model');
 
 /**
   1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
@@ -30,6 +30,17 @@ const Users = require('../users/users-model');
   }
  */
 
+router.post('/register', checkUsernameFree, checkPasswordLength, async (req, res , next) => {
+  try {
+    const hash = bcrypt.hashSync(req.body.password, 8);
+    const user = await User.add({ username: req.body.username, password: hash });
+    res.status(201).json(`added new user ${user.username}`);
+  } catch (err) {
+    next({message: err.message});
+  }
+
+})
+
 
 /**
   2 [POST] /api/auth/login { "username": "sue", "password": "1234" }
@@ -46,6 +57,15 @@ const Users = require('../users/users-model');
     "message": "Invalid credentials"
   }
  */
+
+  router.post("/login", checkUsernameExists, (req, res, next) => {
+    if(bcrypt.compareSync(req.body.password, req.user.password)) {
+      req.session.user = req.user
+      res.status(200).json(`Welcome ${req.user.username}`);
+  } else {
+      next({  status: 400, message: 'invalid login credentials' });
+  }
+  })
 
 
 /**
@@ -66,3 +86,5 @@ const Users = require('../users/users-model');
 
  
 // Don't forget to add the router to the `exports` object so it can be required in other modules
+
+module.exports = router

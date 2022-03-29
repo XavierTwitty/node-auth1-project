@@ -1,7 +1,6 @@
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
-const path = require('path');
 const session = require('express-session');
 
 
@@ -10,11 +9,8 @@ const authRouter = require('./auth/auth-router.js')
 
 const server = express();
 
-server.use('/api/users', usersRouter)
-
-
 const sessionConfig = {
-  name: 'kahsbfhjasef',
+  name: 'chocolatechip',
   secret: "You'll never guess this password",
   cookie: {
     maxAge: 1000 * 60,
@@ -26,15 +22,18 @@ const sessionConfig = {
 };
 
 server.use(session(sessionConfig));
-server.use(express.static(path.join(__dirname, '../client')));
 
 server.use(helmet());
 server.use(express.json());
 server.use(cors());
 
-server.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'index.html'))
-})
+server.use('/api/users', usersRouter)
+server.use('/api/auth', authRouter)
+
+
+server.get("/", (req, res) => {
+  res.json({ api: "up" });
+});
 
 server.use('*', (req, res, next) => {
   next({ status: 404, message: 'not found!' })
