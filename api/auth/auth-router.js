@@ -34,7 +34,7 @@ router.post('/register', checkUsernameFree, checkPasswordLength, async (req, res
   try {
     const hash = bcrypt.hashSync(req.body.password, 8);
     const user = await User.add({ username: req.body.username, password: hash });
-    res.status(201).json(`added new user ${user.username}`);
+    res.status(201).json(user);
   } catch (err) {
     next({message: err.message});
   }
@@ -61,9 +61,9 @@ router.post('/register', checkUsernameFree, checkPasswordLength, async (req, res
   router.post("/login", checkUsernameExists, (req, res, next) => {
     if(bcrypt.compareSync(req.body.password, req.user.password)) {
       req.session.user = req.user
-      res.status(200).json(`Welcome ${req.user.username}`);
+      res.status(200).json({message:`Welcome ${req.user.username}!`});
   } else {
-      next({  status: 400, message: 'invalid login credentials' });
+      next({  status: 400, message: 'invalid credentials' });
   }
   })
 
@@ -84,7 +84,21 @@ router.post('/register', checkUsernameFree, checkPasswordLength, async (req, res
   }
  */
 
- 
+  router.get('/logout', (req, res, next) => {
+    if(req.session.user) {
+        // const {username} = req.session.user;
+        
+        req.session.destroy(err => {
+            if(err) {
+                next(err);
+            } else {
+                res.json({message: `logged out`});
+            }
+        })
+    } else {
+        res.json({message: 'no session'});
+    }
+});
 // Don't forget to add the router to the `exports` object so it can be required in other modules
 
 module.exports = router
